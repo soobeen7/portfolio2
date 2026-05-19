@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cyberpunk Vibe Portfolio</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.34/dist/lenis.min.js"></script>
+
+    <style>
+        /* ==============================================================
+       [1] 네온 사이버펑크 테마 설정
+       ============================================================== */
+        :root {
+            --bg-base: #136d4b;
+            /* 깊은 미드나잇 블루/블랙 */
+            --text-main: #f0f8ff;
+            /* 얼음같이 차가운 흰색 */
+            --text-muted: #6b8299;
+            --glow-1: #00f3ff;
+            /* 네온 시안 */
+            --glow-2: #ff00ea;
+            /* 네온 핑크 */
+            --glow-3: #7a00ff;
+            /* 딥 퍼플 */
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            overscroll-behavior: none;
+            margin: 0;
+            padding: 0;
+            cursor: none;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        @media (pointer: coarse) {
+            body {
+                cursor: auto;
+            }
+
+            .cursor-dot,
+            .cursor-ring,
+            .glow-cursor,
+            .mouse-light {
+                display: none !important;
+            }
+        }
+
+        /* 사이버펑크 스크롤 바 (시안 -> 핑크) */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--glow-1), var(--glow-2));
+            z-index: 10001;
+            box-shadow: 0 0 15px var(--glow-1);
+        }
+
+        /* 사이버 디지털 그리드 */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+            background-size: 50px 50px;
+            background-image:
+                linear-gradient(to right, rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 0, 234, 0.03) 1px, transparent 1px);
+        }
+
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        .ambient-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            overflow: hidden;
+            background-color: var(--bg-base);
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(150px);
+            opacity: 0.25;
+            animation: float 20s infinite alternate ease-in-out;
+            z-index: 0;
+        }
+
+        .blob-1 {
+            width: 50vw;
+            height: 50vw;
+            background: var(--glow-1);
+            top: -10%;
+            left: -10%;
+        }
+
+        .blob-2 {
+            width: 45vw;
+            height: 45vw;
+            background: var(--glow-2);
+            bottom: -10%;
+            right: -10%;
+            animation-delay: -3s;
+        }
+
+        .blob-3 {
+            width: 60vw;
+            height: 60vw;
+            background: var(--glow-3);
+            top: 40%;
+            left: 20%;
+            animation-delay: -7s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            100% {
+                transform: translate(5vw, 10vh) scale(1.2);
+            }
+        }
+
+        /* ==============================================================
+       [2] 마우스 커서: 글리치 파편 (사각형)
+       ============================================================== */
+        .cursor-dot {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background-color: var(--glow-1);
+            pointer-events: none;
+            z-index: 10000;
+            box-shadow: 0 0 10px var(--glow-1);
+        }
+
+        .cursor-ring {
+            position: fixed;
+            width: 30px;
+            height: 30px;
+            border: 1px solid rgba(0, 243, 255, 0.4);
+            pointer-events: none;
+            z-index: 10000;
+            transition: width 0.2s, height 0.2s, border-color 0.2s;
+            border-radius: 2px;
+            /* 원형이 아닌 약간 각진 형태 */
+        }
+
+        .cursor-ring.hovering {
+            width: 50px;
+            height: 50px;
+            border-color: var(--glow-2);
+            background: rgba(255, 0, 234, 0.1);
+        }
+
+        .glow-cursor {
+            position: fixed;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(0, 243, 255, 0.3) 0%, rgba(255, 0, 234, 0.1) 40%, transparent 70%);
+            border-radius: 50%;
+            z-index: 15;
+            pointer-events: none;
+            mix-blend-mode: screen;
+            filter: blur(10px);
+        }
+
+        /* 사이버 글리치 파편 */
+        .sparkle {
+            position: fixed;
+            background: #fff;
+            pointer-events: none;
+            z-index: 14;
+            box-shadow: 0 0 5px var(--glow-1), 0 0 10px var(--glow-2);
+            /* 사각형 글리치 형태 유지 */
+            border-radius: 0;
+        }
+
+        /* ==============================================================
+       [3] 공통 타이포그래피
+       ============================================================== */
+        .super-title {
+            font-size: clamp(3.5rem, 10vw, 12rem);
+            font-weight: 200;
+            line-height: 0.9;
+            color: #fff;
+            letter-spacing: -0.02em;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+        }
+
+        .sub-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5em;
+            color: var(--glow-1);
+            text-transform: uppercase;
+            margin-bottom: 2rem;
+        }
+
+        /* ==============================================================
+       [4] 인트로 & 버튼
+       ============================================================== */
+        #introScreen {
+            position: fixed;
+            inset: 0;
+            z-index: 9000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+        }
+
+        .pure-glass-btn {
+            margin-top: 5rem;
+            padding: 1rem 3rem;
+            background: rgba(0, 243, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 4px;
+            /* 사이버펑크 특유의 각진 테두리 */
+            color: var(--glow-1);
+            font-size: 0.8rem;
+            letter-spacing: 0.3em;
+            transition: all 0.3s;
+            box-shadow: inset 0 0 15px rgba(0, 243, 255, 0.1), 0 0 20px rgba(0, 0, 0, 0.5);
+            font-weight: 600;
+        }
+
+        @media (hover: hover) {
+            .pure-glass-btn:hover {
+                background: var(--glow-1);
+                color: #000;
+                box-shadow: 0 0 30px var(--glow-1);
+                transform: scale(1.05);
+            }
+        }
+
+        /* ==============================================================
+       [5] 캐릭터 래퍼
+       ============================================================== */
+        @keyframes zero-gravity {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        .zero-g-anim {
+            animation: zero-gravity 6s ease-in-out infinite;
+        }
+
+        #charWrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+        }
+
+        #charParallax {
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform-style: preserve-3d;
+        }
+
+        .character-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            opacity: 0.3;
+            filter: drop-shadow(0 0 40px rgba(0, 243, 255, 0.4));
+        }
+
+        /* ==============================================================
+       [6] 프로젝트 카드 UI
+       ============================================================== */
+        #mainContent {
+            display: none;
+        }
+
+        .glass-panel {
+            background: rgba(2, 2, 10, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 243, 255, 0.1);
+            border-radius: 0.5rem;
+            /* 둥근 모서리 대신 약간 각진 형태 */
+            transition: background 0.4s, border-color 0.4s, box-shadow 0.4s;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+        }
+
+        @media (hover: hover) {
+            .glass-panel:hover {
+                background: rgba(0, 243, 255, 0.05);
+                border-color: rgba(255, 0, 234, 0.3);
+                box-shadow: 0 0 30px rgba(255, 0, 234, 0.1);
+            }
+        }
+
+        .img-parallax-wrap {
+            overflow: hidden;
+            border-radius: 0.25rem;
+            position: relative;
+        }
+
+        .parallax-img {
+            width: 100%;
+            height: 130%;
+            object-fit: cover;
+            transform-origin: center;
+            will-change: transform;
+            filter: contrast(1.2) saturate(1.1) grayscale(0.8);
+        }
+
+        .glass-panel:hover .parallax-img {
+            filter: contrast(1) saturate(1) grayscale(0);
+        }
+
+        .circle-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            color: var(--glow-1);
+            text-decoration: none;
+        }
+
+        .circle-link .circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        @media (hover: hover) {
+            .circle-link:hover .circle {
+                background: var(--glow-1);
+                color: #000;
+                transform: scale(1.1);
+                box-shadow: 0 0 15px var(--glow-1);
+            }
+
+            .circle-link:hover span {
+                color: #fff;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="scroll-progress"></div>
+    <div class="grid-overlay"></div>
+    <div class="noise-overlay"></div>
+
+    <div class="glow-cursor" id="glowCursor"></div>
+    <div class="cursor-dot" id="cursorDot"></div>
+    <div class="cursor-ring" id="cursorRing"></div>
+
+    <div class="ambient-canvas" id="ambientCanvas">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div id="introScreen">
+        <div class="intro-anim sub-title" id="introSubTitle">CYBERPUNK VIBE</div>
+        <h1 class="intro-anim super-title" id="introMainTitle">
+            <span>DIGITAL</span>
+            <span>NEXUS</span>
+        </h1>
+        <button class="intro-anim pure-glass-btn interactive-element magnetic" id="enterBtn">
+            INITIALIZE
+        </button>
+    </div>
+
+    <div id="charWrapper">
+        <div id="charParallax" class="zero-g-anim">
+            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png"
+                alt="캐릭터" class="character-img" id="studentImg">
+        </div>
+    </div>
+
+    <main id="mainContent" class="relative z-20">
+        <section class="h-screen flex flex-col items-center justify-center text-center px-4" id="hero">
+            <div class="hero-element sub-title opacity-0 translate-y-10" id="heroSubTitle">System Online</div>
+            <h1 class="hero-element super-title opacity-0 translate-y-10" id="heroMainTitle">
+                <span>Kim</span>
+                <span>Vibe.</span>
+            </h1>
+        </section>
+        <div class="h-16 md:h-32"></div>
+
+        <!-- 10개의 프로젝트 반복 구조는 완벽히 동일 -->
+        <script>
+            // HTML 프로젝트 섹션 동적 생성 (코드 간결화를 위해 JS로 10개 삽입)
+            const mainContent = document.getElementById('mainContent');
+            const projects = [
+                { cat: "AI INTERACTION", title: "Smart Chatbot" }, { cat: "AUTOMATION", title: "Python Workflow" },
+                { cat: "SPATIAL WEB", title: "3D Metaverse" }, { cat: "DATA ANALYSIS", title: "Data Dashboard" },
+                { cat: "GAME DEV", title: "Canvas Web Game" }, { cat: "SMART IOT", title: "Home Automation" },
+                { cat: "WEB DESIGN", title: "Open UI Template" }, { cat: "AR & VR", title: "WebXR Experience" },
+                { cat: "GENERATIVE AI", title: "AI Art Gallery" }, { cat: "FULL STACK", title: "Community Forum" }
+            ];
+
+            let htmlStr = '';
+            projects.forEach((proj, idx) => {
+                const num = String(idx + 1).padStart(2, '0');
+                const alignment = idx % 2 === 0 ? "md:justify-end" : "md:justify-start";
+                const mb = idx === 9 ? "mb-[10vh] md:mb-[20vh]" : "";
+
+                htmlStr += `
+        <section class="min-h-screen flex items-center justify-center ${alignment} px-4 md:px-[10vw] relative py-12 md:py-0 ${mb}" id="proj${idx + 1}">
+          <div class="glass-panel w-full md:w-[42vw] p-6 md:p-10 flex flex-col project-card relative">
+            <div class="w-full h-64 md:h-[400px] img-parallax-wrap mb-8 md:mb-10">
+              <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=1000" alt="Project ${idx + 1}" class="parallax-img">
+            </div>
+            <div class="flex flex-col">
+              <div class="border-t border-[var(--glow-1)]/20 pt-4 mb-4 flex justify-between items-center">
+                <div class="text-[10px] font-semibold text-[var(--glow-1)] tracking-[0.3em]">${num} // ${proj.cat}</div>
+              </div>
+              <h2 class="text-3xl md:text-4xl font-light mb-4 text-white tracking-tight">${proj.title}</h2>
+              <p class="text-gray-400 font-light leading-relaxed mb-4 text-sm">사이버펑크 테마에 맞는 프로젝트 상세 설명을 작성하세요. 미래지향적인 포트폴리오를 구성합니다.</p>
+              <div class="magnetic interactive-element self-start">
+                <a href="#" class="circle-link"><div class="circle">↗</div><span class="transition duration-300">ACCESS DATA</span></a>
+              </div>
+            </div>
+          </div>
+        </section>`;
+            });
+            mainContent.insertAdjacentHTML('beforeend', htmlStr);
+        </script>
+    </main>
+
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        const cursorDot = document.getElementById("cursorDot");
+        const cursorRing = document.getElementById("cursorRing");
+        const glowCursor = document.getElementById("glowCursor");
+        const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+
+        if (!isTouchDevice) {
+            // 동적으로 생성된 요소에도 이벤트 바인딩하기 위해 위임 사용
+            document.body.addEventListener("mouseenter", (e) => {
+                if (e.target.closest('.interactive-element')) cursorRing.classList.add("hovering");
+            }, true);
+            document.body.addEventListener("mouseleave", (e) => {
+                if (e.target.closest('.interactive-element')) cursorRing.classList.remove("hovering");
+            }, true);
+
+            gsap.set([cursorDot, cursorRing, glowCursor], { xPercent: -50, yPercent: -50 });
+
+            const dotX = gsap.quickTo(cursorDot, "x", { duration: 0.02, ease: "none" });
+            const dotY = gsap.quickTo(cursorDot, "y", { duration: 0.02, ease: "none" });
+            const ringX = gsap.quickTo(cursorRing, "x", { duration: 0.15, ease: "power2" });
+            const ringY = gsap.quickTo(cursorRing, "y", { duration: 0.15, ease: "power2" });
+            const glowX = gsap.quickTo(glowCursor, "x", { duration: 0.3, ease: "power2.out" });
+            const glowY = gsap.quickTo(glowCursor, "y", { duration: 0.3, ease: "power2.out" });
+
+            let lastSparkleTime = 0;
+            window.addEventListener("mousemove", (e) => {
+                dotX(e.clientX); dotY(e.clientY); ringX(e.clientX); ringY(e.clientY); glowX(e.clientX); glowY(e.clientY);
+                const now = Date.now();
+                if (now - lastSparkleTime > 40) { createSparkle(e.clientX, e.clientY); lastSparkleTime = now; }
+            });
+        }
+
+        window.addEventListener("pointerdown", (e) => {
+            if (!isTouchDevice) {
+                gsap.fromTo(glowCursor, { scale: 0.5, opacity: 1 }, { scale: 1.5, opacity: 0.5, duration: 0.3, ease: "power4.out", clearProps: "scale,opacity" });
+            }
+            for (let i = 0; i < 12; i++) createSparkle(e.clientX, e.clientY, true);
+        });
+
+        // 사이버 글리치 파편 생성기
+        function createSparkle(x, y, isBurst = false) {
+            const sparkle = document.createElement("div");
+            sparkle.classList.add("sparkle");
+            // 랜덤 색상 (시안 or 핑크)
+            sparkle.style.backgroundColor = Math.random() > 0.5 ? "var(--glow-1)" : "var(--glow-2)";
+            // 랜덤 너비/높이로 사각형 파편 생성
+            const w = Math.random() * 8 + 2;
+            const h = Math.random() * 4 + 1;
+            sparkle.style.width = `${w}px`; sparkle.style.height = `${h}px`;
+            document.body.appendChild(sparkle);
+
+            const spread = isBurst ? (isTouchDevice ? 100 : 150) : 30;
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * spread;
+            const tx = Math.cos(angle) * distance;
+            const ty = Math.sin(angle) * distance;
+
+            gsap.set(sparkle, { x: x, y: y, opacity: 1, xPercent: -50, yPercent: -50 });
+            // 글리치처럼 뚝뚝 끊기며 사라지도록 rough 이징 사용
+            gsap.to(sparkle, {
+                x: x + tx, y: y + ty, opacity: 0, scale: 0, duration: 0.3 + Math.random() * 0.4, ease: "steps(5)", onComplete: () => sparkle.remove()
+            });
+        }
+
+        if (!isTouchDevice) {
+            document.body.addEventListener('mousemove', (e) => {
+                const btn = e.target.closest('.magnetic');
+                if (!btn) return;
+                const rect = btn.getBoundingClientRect();
+                const x = (e.clientX - rect.left - rect.width / 2) * 0.3;
+                const y = (e.clientY - rect.top - rect.height / 2) * 0.3;
+                gsap.to(btn, { x: x, y: y, duration: 0.4, ease: 'power2.out' });
+            }, true);
+            document.body.addEventListener('mouseleave', (e) => {
+                const btn = e.target.closest('.magnetic');
+                if (btn) gsap.to(btn, { x: 0, y: 0, duration: 0.7, ease: 'elastic.out(1, 0.3)' });
+            }, true);
+        }
+
+        const lenis = new Lenis({ duration: 1.2, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), smoothWheel: true });
+        lenis.stop();
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((time) => { lenis.raf(time * 1000); });
+        gsap.ticker.lagSmoothing(0);
+
+        const enterBtn = document.getElementById("enterBtn");
+        const introScreen = document.getElementById("introScreen");
+        const charWrapper = document.getElementById("charWrapper");
+        const charParallax = document.getElementById("charParallax");
+
+        enterBtn.addEventListener("click", () => {
+            // 1. 클릭 중복 방지
+            introScreen.style.pointerEvents = "none";
+            mainContent.style.display = "block";
+
+            const tl = gsap.timeline();
+
+            // 2. 인트로 글자 사라짐 & 배경 투명화
+            tl.to(".intro-anim", { y: -30, opacity: 0, filter: "blur(10px)", duration: 0.6, stagger: 0.1, ease: "power2.inOut" })
+                .to(introScreen, { opacity: 0, duration: 0.6 }, "-=0.2")
+                // ★ 3. 핵심: 인트로가 눈에서 사라진 직후 바로 스크롤 잠금 해제! (답답함 해결)
+                .call(() => {
+                    introScreen.style.display = "none";
+                    lenis.start();
+                    initScrollAnimations();
+                })
+                // 4. 스크롤이 풀린 상태에서 랜딩 글자와 캐릭터가 부드럽게 등장
+                .fromTo(".hero-element", { y: 30, opacity: 0, filter: "blur(10px)" }, { y: 0, opacity: 1, filter: "blur(0px)", duration: 1, stagger: 0.15, ease: "power2.out" })
+
+                // ★ 이 부분을 수정하세요! (시작할 때 무조건 정중앙인 0vw에 못 박아둠)
+                .fromTo(charWrapper, { opacity: 0, x: "0vw" }, { opacity: 1, x: "0vw", duration: 1 }, "-=1")
+
+                .fromTo(charParallax, { scale: 0.95, y: 30 }, { scale: 1, y: 0, duration: 1.5, ease: "power3.out" }, "-=1.2");
+        });
+
+        function initScrollAnimations() {
+            gsap.to(".scroll-progress", { width: "100%", scrollTrigger: { trigger: "body", start: "top top", end: "bottom bottom", scrub: 0.1 } });
+            gsap.to(".hero-element", { scrollTrigger: { trigger: "#hero", start: "top top", end: "bottom top", scrub: 1 }, y: -100, opacity: 0, stagger: 0.1 });
+
+            let mm = gsap.matchMedia();
+
+            mm.add("(min-width: 768px)", () => {
+                gsap.to("#charParallax", { scrollTrigger: { trigger: "#proj1", start: "top 90%", end: "top 30%", scrub: 1.5 }, width: "35vw", height: "50vh", maxWidth: "450px" });
+                gsap.to("#studentImg", { scrollTrigger: { trigger: "#proj1", start: "top 90%", end: "top 30%", scrub: 1.5 }, opacity: 1, filter: "drop-shadow(0 0 30px rgba(0,243,255,0.6))" });
+
+                for (let i = 1; i <= 10; i++) {
+                    const endX = i % 2 !== 0 ? "-22vw" : "22vw";
+                    // 첫 번째 섹션은 중앙(0vw)에서 왼쪽으로, 나머지는 이전 위치의 반대편에서 출발하도록 설정
+                    const startX = i === 1 ? "0vw" : (i % 2 !== 0 ? "22vw" : "-22vw");
+
+                    gsap.fromTo("#charWrapper",
+                        { x: startX },
+                        {
+                            x: endX,
+                            ease: "power1.inOut",
+                            scrollTrigger: {
+                                trigger: `#proj${i}`,
+                                start: "top bottom",
+                                end: "center center",
+                                scrub: 1.5,
+                                immediateRender: false // ★ 여러 트리거 충돌 방지 핵심 옵션
+                            }
+                        }
+                    );
+                }
+            });
+
+            mm.add("(max-width: 767px)", () => {
+                gsap.to("#charParallax", { scrollTrigger: { trigger: "#proj1", start: "top 90%", end: "top 30%", scrub: 1.5 }, width: "60vw", height: "40vh", maxWidth: "300px" });
+                // 모바일은 화면을 가리지 않게 투명도를 0.3으로 낮춤
+                gsap.to("#studentImg", { scrollTrigger: { trigger: "#proj1", start: "top 90%", end: "top 30%", scrub: 1.5 }, opacity: 0.3, filter: "drop-shadow(0 10px 20px rgba(255,69,0,0.3))" });
+
+                // ★ 모바일: 좌우로 살짝씩 기우뚱거리며(rotation) 회전하고 돌아다니는 유영 효과
+                for (let i = 1; i <= 10; i++) {
+                    const endX = i % 2 !== 0 ? "-8vw" : "8vw";
+                    const startX = i === 1 ? "0vw" : (i % 2 !== 0 ? "8vw" : "-8vw");
+                    const endRot = i % 2 !== 0 ? -8 : 8; // 좌우 회전 각도
+                    const startRot = i === 1 ? 0 : (i % 2 !== 0 ? 8 : -8);
+
+                    gsap.fromTo("#charWrapper",
+                        { x: startX, rotation: startRot },
+                        {
+                            x: endX,
+                            rotation: endRot,
+                            ease: "sine.inOut",
+                            scrollTrigger: { trigger: `#proj${i}`, start: "top bottom", end: "center center", scrub: 2, immediateRender: false }
+                        }
+                    )
+                }
+            });
+
+            gsap.utils.toArray('.project-card').forEach((card) => {
+                const img = card.querySelector('.parallax-img');
+                gsap.fromTo(card, { y: 100, opacity: 0, rotateX: 10 }, { scrollTrigger: { trigger: card, start: "top 85%", end: "top 50%", scrub: 1 }, y: 0, opacity: 1, rotateX: 0, ease: "power3.out" });
+                gsap.fromTo(img, { yPercent: -15, scale: 1.2 }, { scrollTrigger: { trigger: card, start: "top bottom", end: "bottom top", scrub: true }, yPercent: 15, scale: 1, ease: "none" });
+            });
+        }
+    </script>
+</body>
+
+</html>
